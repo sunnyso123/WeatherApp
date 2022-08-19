@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import styled from "@emotion/styled";
 import { ReactComponent as AirFlowIcon } from './images/airFlow.svg';
 import { ReactComponent as RainIcon } from './images/rain.svg';
-import { ReactComponent as RedoIcon } from './images/refresh.svg';
+import { ReactComponent as RefreshIcon } from './images/refresh.svg';
+import { ReactComponent as LoadingIcon } from './images/loading.svg'
 import WeatherIcon from "./WeatherIcon";
+import sunriseAndSunsetData from './sunrise-sunset.json';
 
 const Container = styled.div`
     background-color: #ededed;
@@ -82,7 +84,7 @@ const Rain = styled.div`
   }
 `;
 
-const Redo = styled.div`
+const Refresh = styled.div`
   position: absolute;
   right: 15px;
   bottom: 15px;
@@ -96,6 +98,17 @@ const Redo = styled.div`
     width: 15px;
     height: 15px;
     cursor: pointer;
+    animation: rotate infinite 1.5s linear;
+    animation-duration: ${({ isLoading }) => (isLoading ? '1.5s' : '0s')};
+  }
+
+  @keyframes rotate {
+    from {
+      transform: rotate(360deg);
+    }
+    to {
+      transform: rotate(0deg);
+    }
   }
 `;
 
@@ -148,9 +161,35 @@ const fetchWeatherForecast = () => {
   })
 };
 
-const WeatherApp = () => {
-  console.log('--- invoke function component ---');
+const getMoment = (locationName) => {
+  const location = sunriseAndSunsetData.find(
+    (data) => data.locationName === locationName
+  );
 
+  if(!location) return null;
+
+  const now = new Date();
+
+  const nowDate = Intl.DateTimeFormat('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now).replace(/\//g, '-');
+
+  const locationDate = location.time && location.time.find((time) => time.dataTime === nowDate);
+
+  const sunriseTimestamp = new Date(
+    `${locationDate.dataTime} ${locationDate.sunrise}`
+  ).getTime();
+  const sunsetTimestamp = new Date(
+    `${locationDate.dataTime} ${locationDate.sunset}`
+  ).getTime();
+  const nowTimestamp = now.getTime();
+
+  return sunriseTimestamp <= nowTimestamp && nowTimestamp <= sunsetTimestamp ? 'day' : 'night';
+};
+
+const WeatherApp = () => {
   const [weatherElement, setWeatherElement] = useState({
     observationTime: new Date(),
     locationName: '',
@@ -161,7 +200,20 @@ const WeatherApp = () => {
     weatherCode: 0,
     rainPossibility: 0,
     comfortability: '',
+    isLoading: true,
   });
+
+  const {
+    observationTime,
+    locationName,
+    temperature,
+    windSpeed,
+    description,
+    weatherCode,
+    rainPossibility,
+    comfortability,
+    isLoading,
+  } = weatherElement;
 
   const fetchData = useCallback(() => {
     const fetchingData = async() => {
@@ -173,53 +225,61 @@ const WeatherApp = () => {
       setWeatherElement({
         ...currentWeather,
         ...weatherForecast,
+        isLoading: false,
       });
     };
+
+    setWeatherElement((prevState) => ({
+      ...prevState,
+      isLoading: true,
+    }));
 
     fetchingData();
   }, []);
 
   useEffect(() => {
-    console.log('execute function in useEffect');
     fetchData();
   }, [fetchData])
 
+  const moment = useMemo(() => getMoment(weatherElement.locationName), [
+    weatherElement.locationName,
+  ]);
+
   return (
       <Container>
-        {console.log('render')}
           <WeatherCard>
-              <Location>{weatherElement.locationName}</Location>
+              <Location>{locationName}</Location>
               <Description>              
-                {weatherElement.description} {weatherElement.comfortability}
+                {description} {comfortability}
               </Description>
               <CurrentWeather>
                   <Temperature>
-                    {Math.round(weatherElement.temperature)}<Celsius>°C</Celsius>
+                    {Math.round(temperature)}<Celsius>°C</Celsius>
                   </Temperature>
                   <WeatherIcon 
-                    currentWeatherCode={weatherElement.weatherCode}
-                    moment="night"
+                    currentWeatherCode={weatherCode}
+                    moment={moment || 'day'}
                   />
               </CurrentWeather>
               <AirFlow>
                   <AirFlowIcon />
-                  {weatherElement.windSpeed} m/h
+                  {windSpeed} m/h
               </AirFlow>
               <Rain>
                   <RainIcon />
-                  {Math.round(weatherElement.rainPossibility)} %
+                  {Math.round(rainPossibility)} %
               </Rain>
-              <Redo>
+              <Refresh isLoading={isLoading}>
                 最後觀測時間：
                 {new Intl.DateTimeFormat('zh-TW', {
                   hour: 'numeric',
                   minute: 'numeric',
-                }).format(new Date(weatherElement.observationTime))}{' '}
-                <RedoIcon onClick={fetchData}/>
-              </Redo>
+                }).format(new Date(observationTime))}{' '}
+                {isLoading ? <LoadingIcon /> : <RefreshIcon onClick={fetchData}/>}
+              </Refresh>
           </WeatherCard>
       </Container>
-    );
+  );
 };
 
 export default WeatherApp;
