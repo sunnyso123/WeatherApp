@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import styled from "@emotion/styled";
-import { ReactComponent as CloudyIcon } from './images/day-cloudy.svg';
 import { ReactComponent as AirFlowIcon } from './images/airFlow.svg';
 import { ReactComponent as RainIcon } from './images/rain.svg';
 import { ReactComponent as RedoIcon } from './images/refresh.svg';
+import WeatherIcon from "./WeatherIcon";
 
 const Container = styled.div`
     background-color: #ededed;
@@ -80,10 +80,6 @@ const Rain = styled.div`
     height: auto;
     margin-right: 30px;
   }
-`;
-
-const Cloudy = styled(CloudyIcon)`
-  flex-basis: 30%;
 `;
 
 const Redo = styled.div`
@@ -200,7 +196,10 @@ const WeatherApp = () => {
                   <Temperature>
                     {Math.round(weatherElement.temperature)}<Celsius>°C</Celsius>
                   </Temperature>
-                  <Cloudy />
+                  <WeatherIcon 
+                    currentWeatherCode={weatherElement.weatherCode}
+                    moment="night"
+                  />
               </CurrentWeather>
               <AirFlow>
                   <AirFlowIcon />
