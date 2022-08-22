@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const fetchCurrentWeather = () => {
-    return fetch('https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=CWB-501AA68A-D87D-41B4-8B8D-F10FAC43F85C&locationName=臺北')
+const fetchCurrentWeather = (locationName) => {
+    return fetch(`https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=CWB-501AA68A-D87D-41B4-8B8D-F10FAC43F85C&locationName=${locationName}`)
     .then((response) => response.json())
     .then((data) => {
         const locationData = data.records.location[0]; 
@@ -25,8 +25,8 @@ const fetchCurrentWeather = () => {
         })
 };
   
-const fetchWeatherForecast = () => {
-    return fetch('https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=CWB-501AA68A-D87D-41B4-8B8D-F10FAC43F85C&locationName=臺北市')
+const fetchWeatherForecast = (cityName) => {
+    return fetch(`https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=CWB-501AA68A-D87D-41B4-8B8D-F10FAC43F85C&locationName=${cityName}`)
     .then((response) => response.json())
     .then((data) => {
         const locationData = data.records.location[0]; 
@@ -49,7 +49,9 @@ const fetchWeatherForecast = () => {
         })
 };
 
-const useWeatherApi = () => {
+const useWeatherApi = (currentLocation) => {
+    const  { locationName, cityName } = currentLocation;
+
     const [weatherElement, setWeatherElement] = useState({
         observationTime: new Date(),
         locationName: '',
@@ -66,8 +68,8 @@ const useWeatherApi = () => {
     const fetchData = useCallback(() => {
         const fetchingData = async() => {
             const [currentWeather, weatherForecast] = await Promise.all([
-                fetchCurrentWeather(),
-                fetchWeatherForecast(),
+                fetchCurrentWeather(locationName),
+                fetchWeatherForecast(cityName),
             ]);
         
             setWeatherElement({
@@ -83,7 +85,7 @@ const useWeatherApi = () => {
         }));
     
         fetchingData();
-    }, []);
+    }, [locationName, cityName]);
     
     useEffect(() => {fetchData();}, [fetchData])
     return [weatherElement, fetchData];
