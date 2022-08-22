@@ -4,6 +4,7 @@ import { ReactComponent as AirFlowIcon } from './images/airFlow.svg';
 import { ReactComponent as RainIcon } from './images/rain.svg';
 import { ReactComponent as RefreshIcon } from './images/refresh.svg';
 import { ReactComponent as LoadingIcon } from './images/loading.svg'
+import { ReactComponent as CogIcon } from "./images/cog.svg";
 import WeatherIcon from "./WeatherIcon";
 
 const WeatherCardWrapper = styled.div`
@@ -103,8 +104,17 @@ const Refresh = styled.div`
     }
 `;
 
+const Cog = styled(CogIcon)`
+  position: absolute;
+  top: 30px;
+  right: 15px;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+`
+
 const WeatherCard = (props) => {
-    const { weatherElement, moment, fetchData } = props;
+    const { weatherElement, moment, fetchData, setCurrentPage } = props;
 
     const {
         observationTime,
@@ -120,6 +130,7 @@ const WeatherCard = (props) => {
 
     return (
         <WeatherCardWrapper>
+            <Cog onClick={() => setCurrentPage('WeatherSetting')} />
             <Location>{locationName}</Location>
             <Description>              
                 {description} {comfortability}
